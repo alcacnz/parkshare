@@ -474,7 +474,10 @@ export default function ParkShare() {
       </div>
 
       {/* Front */}
-      <p style={{ color: "#9FE1CB", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 6px" }}>Front parking</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 6px" }}>
+        <p style={{ color: "#9FE1CB", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: 0 }}>Front parking</p>
+        <span style={{ color: "#5DCAA5", fontSize: 11, fontWeight: 600 }}>F1–F20 &nbsp;· scroll →</span>
+      </div>
       <div style={{ background: "#085041", borderRadius: 10, padding: "10px 8px", overflowX: "auto", marginBottom: 14 }}>
         <div style={{ display: "flex", gap: 3, direction: "rtl", minWidth: "max-content" }}>
           {front.map(s => <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} />)}
@@ -487,7 +490,10 @@ export default function ParkShare() {
       </div>
 
       {/* Back */}
-      <p style={{ color: "#9FE1CB", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 6px" }}>Back parking</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 6px" }}>
+        <p style={{ color: "#9FE1CB", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: 0 }}>Back parking</p>
+        <span style={{ color: "#5DCAA5", fontSize: 11, fontWeight: 600 }}>B1–B7 &nbsp;· scroll →</span>
+      </div>
       <div style={{ background: "#085041", borderRadius: 10, padding: "10px 8px", overflowX: "auto", marginBottom: 14 }}>
         <div style={{ display: "flex", gap: 3, justifyContent: "flex-end", minWidth: "max-content" }}>
           {back.map(s => <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} />)}
