@@ -278,12 +278,41 @@ export default function ParkShare() {
   const [showBookingInput, setShowBookingInput] = useState(false);
   const [showConfirmRelease, setShowConfirmRelease] = useState(false);
 
-  // Load spots from Supabase on mount
+  // Load spots from Supabase on mount + Realtime subscription
   useEffect(() => {
+    // Initial load
     fetchSpots().then(data => {
       setSpots(data);
       setLoading(false);
     });
+
+    // Supabase Realtime — listen for any changes to parking_spots
+    const channel = new WebSocket(
+      `${SUPABASE_URL.replace("https", "wss")}/realtime/v1/websocket?apikey=${SUPABASE_KEY}&vsn=1.0.0`
+    );
+
+    channel.onopen = () => {
+      channel.send(JSON.stringify({
+        topic: "realtime:public:parking_spots",
+        event: "phx_join",
+        payload: {},
+        ref: "1",
+      }));
+    };
+
+    channel.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (
+        msg.topic === "realtime:public:parking_spots" &&
+        ["INSERT", "UPDATE", "DELETE"].includes(msg.payload?.data?.type)
+      ) {
+        // Refresh all spots when any change is detected
+        fetchSpots().then(data => setSpots(data));
+      }
+    };
+
+    // Cleanup on unmount
+    return () => { channel.close(); };
   }, []);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
