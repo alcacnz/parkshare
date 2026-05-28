@@ -63,29 +63,29 @@ const btn = (bg, color, extra = {}) => ({
 });
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
-function SpotTile({ spot, selected, onSelect }) {
+function SpotTile({ spot, selected, onSelect, isLast }) {
   const status = computeStatus(spot);
   const c = C[status];
   const sel = selected?.id === spot.id;
   return (
     <div onClick={() => onSelect(spot)} style={{
-      width: 54, flexShrink: 0, cursor: "pointer",
+      width: 50, flexShrink: 0, cursor: "pointer",
       display: "flex", flexDirection: "column", alignItems: "center",
-      gap: 2, padding: "4px 2px", borderRadius: 6,
-      border: `2px solid ${sel ? "white" : "transparent"}`,
-      transition: "border 0.15s",
+      gap: 2, padding: "4px 0",
+      borderRight: isLast ? "none" : "1px solid #1D6B56",
+      background: sel ? "rgba(255,255,255,0.08)" : "transparent",
+      transition: "background 0.15s",
     }}>
       <span style={{
         fontSize: 9, color: c.text, fontWeight: 600, textAlign: "center",
-        maxWidth: 52, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
+        maxWidth: 48, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
       }}>
-        {status === "available" && !spot.owner ? "OPEN"
-          : status === "available" ? "FREE"
-          : status === "booked" ? spot.booked_by
+        {status === "booked" ? spot.booked_by
+          : status === "available" ? spot.owner || ""
           : spot.owner}
       </span>
       <div style={{
-        width: 38, height: 54, borderRadius: 4,
+        width: 36, height: 52, borderRadius: 3,
         background: c.bg, border: `1px solid ${c.border}`,
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
@@ -231,8 +231,11 @@ function SpotPanel({
                 onConfirm={onRelease} onCancel={() => setShowReleasePicker(false)} />
             ) : (
               <>
-                <button onClick={() => setShowReleasePicker(true)} style={btn("#085041", "white", { marginBottom: 0 })}>Release my spot</button>
-                <p style={{ margin: 0, fontSize: 11, color: "#aaa", textAlign: "center" }}>Only release if this is your assigned spot</p>
+                <div style={{ background: "#FFF8E1", borderRadius: 8, padding: "10px 12px", marginBottom: 4 }}>
+                  <p style={{ color: "#92620A", fontWeight: 600, fontSize: 13, margin: "0 0 2px" }}>⚠️ This is {spot.owner ? spot.owner + "'s" : "a"} spot</p>
+                  <p style={{ color: "#92620A", fontSize: 11, margin: 0 }}>Only proceed if this is your assigned spot</p>
+                </div>
+                <button onClick={() => setShowReleasePicker(true)} style={btn("#085041", "white", { marginBottom: 0 })}>Yes, release my spot</button>
               </>
             )
           )}
@@ -278,7 +281,7 @@ export default function ParkShare() {
   const [showBookingInput, setShowBookingInput] = useState(false);
   const [showConfirmRelease, setShowConfirmRelease] = useState(false);
 
-  // Load spots from Supabase on mount + Realtime subscription
+  // Load spots from Supabase on mount + poll every 10 seconds for real-time feel
   useEffect(() => {
     // Initial load
     fetchSpots().then(data => {
@@ -286,33 +289,13 @@ export default function ParkShare() {
       setLoading(false);
     });
 
-    // Supabase Realtime — listen for any changes to parking_spots
-    const channel = new WebSocket(
-      `${SUPABASE_URL.replace("https", "wss")}/realtime/v1/websocket?apikey=${SUPABASE_KEY}&vsn=1.0.0`
-    );
-
-    channel.onopen = () => {
-      channel.send(JSON.stringify({
-        topic: "realtime:public:parking_spots",
-        event: "phx_join",
-        payload: {},
-        ref: "1",
-      }));
-    };
-
-    channel.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      if (
-        msg.topic === "realtime:public:parking_spots" &&
-        ["INSERT", "UPDATE", "DELETE"].includes(msg.payload?.data?.type)
-      ) {
-        // Refresh all spots when any change is detected
-        fetchSpots().then(data => setSpots(data));
-      }
-    };
+    // Poll every 10 seconds — reliable cross-device refresh
+    const interval = setInterval(() => {
+      fetchSpots().then(data => setSpots(data));
+    }, 10000);
 
     // Cleanup on unmount
-    return () => { channel.close(); };
+    return () => clearInterval(interval);
   }, []);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
@@ -430,7 +413,10 @@ export default function ParkShare() {
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => setShowRules(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#5DCAA5", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Rules</button>
           {isAdmin
-            ? <span style={{ background: "#1D9E75", color: "white", borderRadius: 6, padding: "6px 12px", fontSize: 12, fontWeight: 600 }}>Admin ✓</span>
+            ? <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <span style={{ background: "#1D9E75", color: "white", borderRadius: 6, padding: "6px 12px", fontSize: 12, fontWeight: 600 }}>Admin ✓</span>
+                <button onClick={() => { setIsAdmin(false); setAdminInput(""); }} style={{ background: "transparent", border: "1px solid #ef4444", color: "#ef4444", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Log out</button>
+              </div>
             : <button onClick={() => setShowAdminBox(!showAdminBox)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#5DCAA5", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Admin</button>
           }
         </div>
@@ -473,30 +459,69 @@ export default function ParkShare() {
         ))}
       </div>
 
-      {/* Front */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 6px" }}>
-        <p style={{ color: "#9FE1CB", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: 0 }}>Front parking</p>
-        <span style={{ color: "#5DCAA5", fontSize: 11, fontWeight: 600 }}>F1–F20 &nbsp;· scroll →</span>
-      </div>
-      <div style={{ background: "#085041", borderRadius: 10, padding: "10px 8px", overflowX: "auto", marginBottom: 14 }}>
-        <div style={{ display: "flex", gap: 3, direction: "rtl", minWidth: "max-content" }}>
-          {front.map(s => <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} />)}
+      {/* Parking Map Layout */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+
+        {/* Left Driveway — full height, same width as horizontal driveway height */}
+        <div style={{ width: 36, flexShrink: 0, background: "#085041", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ color: "#5DCAA5", fontSize: 9, fontWeight: 700, writingMode: "vertical-rl", transform: "rotate(180deg)", letterSpacing: 1, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+            ← Driveway →
+          </span>
+        </div>
+
+        {/* Main Area */}
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+
+          {/* B1-B7 — aligned LEFT */}
+          <div>
+            <p style={{ color: "#9FE1CB", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 4px", textAlign: "center" }}>Back parking</p>
+            <div style={{ background: "#085041", borderRadius: 8, padding: "8px 6px", overflowX: "auto" }}>
+              <div style={{ display: "flex", gap: 3, minWidth: "max-content" }}>
+                {back.map(s => <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} />)}
+              </div>
+            </div>
+          </div>
+
+          {/* Atlas Copco HQ — full width */}
+          <div style={{ background: "#E8DFC8", borderRadius: 8, height: 52, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: "#085041", fontWeight: 700, fontSize: 13 }}>Atlas Copco Group HQ</span>
+          </div>
+
+          {/* F1-F20 — full width */}
+          <div>
+            <p style={{ color: "#9FE1CB", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 4px", textAlign: "center" }}>Front parking</p>
+            <div style={{ background: "#085041", borderRadius: 8, padding: "8px 6px", overflowX: "auto", border: "1px solid #1D6B56" }}>
+              <div style={{ display: "flex", minWidth: "max-content" }}>
+                {front.map((s, i) => <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} isLast={i === front.length - 1} />)}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Driveway — full width */}
+          <div style={{ background: "#085041", borderRadius: 8, padding: "6px 12px", textAlign: "center" }}>
+            <span style={{ color: "#5DCAA5", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>← Driveway →</span>
+          </div>
+
         </div>
       </div>
 
-      {/* HQ */}
-      <div style={{ background: "#E8DFC8", borderRadius: 10, height: 60, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-        <span style={{ color: "#085041", fontWeight: 700, fontSize: 14 }}>Atlas Copco Group HQ</span>
+      {/* Small vertical driveway — T shape, aligned to 5th slot from right */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+        <div style={{ width: 36, flexShrink: 0 }} />
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", paddingRight: `${4 * 50 + 11}px` }}>
+          <div style={{ width: 36, background: "#085041", borderRadius: 8, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: "#5DCAA5", fontSize: 8, fontWeight: 700, writingMode: "vertical-rl", transform: "rotate(180deg)", letterSpacing: 1, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+              ↑ Driveway ↓
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Back */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 6px" }}>
-        <p style={{ color: "#9FE1CB", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: 0 }}>Back parking</p>
-        <span style={{ color: "#5DCAA5", fontSize: 11, fontWeight: 600 }}>B1–B7 &nbsp;· scroll →</span>
-      </div>
-      <div style={{ background: "#085041", borderRadius: 10, padding: "10px 8px", overflowX: "auto", marginBottom: 14 }}>
-        <div style={{ display: "flex", gap: 3, justifyContent: "flex-end", minWidth: "max-content" }}>
-          {back.map(s => <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} />)}
+      {/* Great South Road — full width */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+        <div style={{ width: 36, flexShrink: 0 }} />
+        <div style={{ flex: 1, background: "#085041", borderRadius: 8, padding: "7px 12px", textAlign: "center" }}>
+          <span style={{ color: "#5DCAA5", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Great South Road</span>
         </div>
       </div>
 
