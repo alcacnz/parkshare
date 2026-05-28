@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
 const ADMIN_CODE = "Welcome@2026!";
 const NZ_TIMEZONE = "Pacific/Auckland";
 const SUPABASE_URL = "https://buslyaosiesozpfwbadu.supabase.co";
@@ -11,12 +10,10 @@ const HEADERS = {
   "Authorization": `Bearer ${SUPABASE_KEY}`,
 };
 
-// ─── SUPABASE API ─────────────────────────────────────────────────────────────
 async function fetchSpots() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/parking_spots?select=*&order=id`, { headers: HEADERS });
   return res.json();
 }
-
 async function updateSpotDB(id, changes) {
   await fetch(`${SUPABASE_URL}/rest/v1/parking_spots?id=eq.${id}`, {
     method: "PATCH",
@@ -25,21 +22,20 @@ async function updateSpotDB(id, changes) {
   });
 }
 
-// ─── DATE HELPERS ─────────────────────────────────────────────────────────────
 function todayNZ() { return new Date().toLocaleDateString("en-CA", { timeZone: NZ_TIMEZONE }); }
 function fmt(s) {
   if (!s) return "";
   return new Date(s + "T00:00:00").toLocaleDateString("en-NZ", { day: "numeric", month: "short" });
 }
 function maxEnd(start) {
-  const d = new Date(start + "T00:00:00"); d.setDate(d.getDate() + 19);
+  const d = new Date(start + "T00:00:00");
+  d.setDate(d.getDate() + 19);
   return d.toLocaleDateString("en-CA");
 }
 function dayCount(from, until) {
   return Math.round((new Date(until + "T00:00:00") - new Date(from + "T00:00:00")) / 86400000) + 1;
 }
 
-// ─── SPOT LOGIC ───────────────────────────────────────────────────────────────
 function isDedicated(spot) { return !!spot.owner; }
 function computeStatus(spot) {
   if (spot.booked_by) return "booked";
@@ -50,19 +46,18 @@ function computeStatus(spot) {
   return inRange ? "available" : "reserved";
 }
 
-// ─── COLORS ───────────────────────────────────────────────────────────────────
 const C = {
   reserved:  { bg: "#444441", border: "#5F5E5A", text: "#9FE1CB", label: "Reserved" },
   available: { bg: "#1D9E75", border: "#0F6E56", text: "#E1F5EE", label: "Available" },
   booked:    { bg: "#B91C1C", border: "#991818", text: "#FEE2E2", label: "Booked" },
 };
+
 const btn = (bg, color, extra = {}) => ({
   background: bg, color, border: "none", borderRadius: 7, padding: "10px 14px",
   cursor: "pointer", fontWeight: 600, fontSize: 13, width: "100%",
   textAlign: "center", marginBottom: 6, display: "block", ...extra,
 });
 
-// ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 function SpotTile({ spot, selected, onSelect, isLast }) {
   const status = computeStatus(spot);
   const c = C[status];
@@ -80,9 +75,7 @@ function SpotTile({ spot, selected, onSelect, isLast }) {
         fontSize: 9, color: c.text, fontWeight: 600, textAlign: "center",
         maxWidth: 48, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
       }}>
-        {status === "booked" ? spot.booked_by
-          : status === "available" ? spot.owner || ""
-          : spot.owner}
+        {status === "booked" ? spot.booked_by : spot.owner || ""}
       </span>
       <div style={{
         width: 36, height: 52, borderRadius: 3,
@@ -98,7 +91,8 @@ function SpotTile({ spot, selected, onSelect, isLast }) {
         {status === "booked" && (
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
             stroke={c.text} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
           </svg>
         )}
       </div>
@@ -116,12 +110,14 @@ function DateRangePicker({ startDate, endDate, onStartChange, onEndChange, onCon
       <div style={{ display: "flex", gap: 8 }}>
         <div style={{ flex: 1 }}>
           <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 3 }}>From</label>
-          <input type="date" value={startDate} min={today} onChange={e => onStartChange(e.target.value)}
+          <input type="date" value={startDate} min={today}
+            onChange={e => onStartChange(e.target.value)}
             style={{ width: "100%", border: "1px solid #ddd", borderRadius: 6, padding: "7px 8px", fontSize: 13, boxSizing: "border-box" }} />
         </div>
         <div style={{ flex: 1 }}>
           <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 3 }}>To</label>
-          <input type="date" value={endDate} min={startDate} max={maxEnd(startDate)} onChange={e => onEndChange(e.target.value)}
+          <input type="date" value={endDate} min={startDate} max={maxEnd(startDate)}
+            onChange={e => onEndChange(e.target.value)}
             style={{ width: "100%", border: "1px solid #ddd", borderRadius: 6, padding: "7px 8px", fontSize: 13, boxSizing: "border-box" }} />
         </div>
       </div>
@@ -186,7 +182,9 @@ function SpotPanel({
               style={{ width: "100%", border: "1px solid #ddd", borderRadius: 6, padding: "8px 10px", fontSize: 13, boxSizing: "border-box", marginBottom: 8 }} />
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={onAdminAssign} style={{ ...btn("#0F6E56", "white", { marginBottom: 0 }), flex: 1 }}>Save</button>
-              {dedicated && <button onClick={onAdminClearOwner} style={{ ...btn("#f3f4f6", "#666", { marginBottom: 0 }), flex: 1 }}>Set as open</button>}
+              {dedicated && (
+                <button onClick={onAdminClearOwner} style={{ ...btn("#f3f4f6", "#666", { marginBottom: 0 }), flex: 1 }}>Set as open</button>
+              )}
             </div>
           </div>
           {dedicated && status === "reserved" && (
@@ -195,14 +193,20 @@ function SpotPanel({
                 onStartChange={onStartChange} onEndChange={onEndChange}
                 onConfirm={onAdminReleaseOnBehalf} onCancel={() => setShowReleasePicker(false)} />
             ) : (
-              <button onClick={() => setShowReleasePicker(true)} style={btn("#f3f4f6", "#085041", { marginBottom: 0 })}>Release on behalf of staff</button>
+              <button onClick={() => setShowReleasePicker(true)} style={btn("#f3f4f6", "#085041", { marginBottom: 0 })}>
+                Release on behalf of staff
+              </button>
             )
           )}
           {dedicated && status === "available" && spot.released_until && (
-            <button onClick={onCancelRelease} style={btn("#fff4f4", "#B91C1C", { border: "1px solid #fcc", marginBottom: 0 })}>Cancel release</button>
+            <button onClick={onCancelRelease} style={btn("#fff4f4", "#B91C1C", { border: "1px solid #fcc", marginBottom: 0 })}>
+              Cancel release
+            </button>
           )}
           {status === "booked" && (
-            <button onClick={onAdminCancelBooking} style={btn("#fff4f4", "#B91C1C", { border: "1px solid #fcc", marginBottom: 0 })}>Cancel booking</button>
+            <button onClick={onAdminCancelBooking} style={btn("#fff4f4", "#B91C1C", { border: "1px solid #fcc", marginBottom: 0 })}>
+              Cancel booking
+            </button>
           )}
         </div>
       ) : (
@@ -232,10 +236,14 @@ function SpotPanel({
             ) : (
               <>
                 <div style={{ background: "#FFF8E1", borderRadius: 8, padding: "10px 12px", marginBottom: 4 }}>
-                  <p style={{ color: "#92620A", fontWeight: 600, fontSize: 13, margin: "0 0 2px" }}>⚠️ This is {spot.owner ? spot.owner + "'s" : "a"} spot</p>
+                  <p style={{ color: "#92620A", fontWeight: 600, fontSize: 13, margin: "0 0 2px" }}>
+                    This is {spot.owner ? spot.owner + "'s" : "a"} spot
+                  </p>
                   <p style={{ color: "#92620A", fontSize: 11, margin: 0 }}>Only proceed if this is your assigned spot</p>
                 </div>
-                <button onClick={() => setShowReleasePicker(true)} style={btn("#085041", "white", { marginBottom: 0 })}>Yes, release my spot</button>
+                <button onClick={() => setShowReleasePicker(true)} style={btn("#085041", "white", { marginBottom: 0 })}>
+                  Yes, release my spot
+                </button>
               </>
             )
           )}
@@ -262,7 +270,6 @@ function SpotPanel({
   );
 }
 
-// ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function ParkShare() {
   const [spots, setSpots] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -281,20 +288,11 @@ export default function ParkShare() {
   const [showBookingInput, setShowBookingInput] = useState(false);
   const [showConfirmRelease, setShowConfirmRelease] = useState(false);
 
-  // Load spots from Supabase on mount + poll every 10 seconds for real-time feel
   useEffect(() => {
-    // Initial load
-    fetchSpots().then(data => {
-      setSpots(data);
-      setLoading(false);
-    });
-
-    // Poll every 10 seconds — reliable cross-device refresh
+    fetchSpots().then(data => { setSpots(data); setLoading(false); });
     const interval = setInterval(() => {
       fetchSpots().then(data => setSpots(data));
     }, 10000);
-
-    // Cleanup on unmount
     return () => clearInterval(interval);
   }, []);
 
@@ -312,12 +310,7 @@ export default function ParkShare() {
     setStartDate(todayNZ()); setEndDate(todayNZ());
   };
 
-  const selectSpot = (spot) => {
-    setSelected(spot);
-    setEditName(spot.owner || "");
-    resetPanel();
-  };
-
+  const selectSpot = (spot) => { setSelected(spot); setEditName(spot.owner || ""); resetPanel(); };
   const handleStartChange = (v) => { setStartDate(v); if (endDate < v) setEndDate(v); };
   const handleEndChange = (v) => { const max = maxEnd(startDate); setEndDate(v > max ? max : v); };
 
@@ -327,21 +320,18 @@ export default function ParkShare() {
     showToast(`${selected.id} booked by ${bookingName.trim()}`);
     resetPanel();
   };
-
   const handleRelease = async () => {
     if (!selected) return;
     await updateSpot(selected.id, { released_from: startDate, released_until: endDate, booked_by: null, status: "available" });
     showToast(`${selected.id} released: ${fmt(startDate)} – ${fmt(endDate)}`);
     resetPanel();
   };
-
   const handleCancelRelease = async () => {
     if (!selected) return;
     await updateSpot(selected.id, { released_from: null, released_until: null, booked_by: null, status: "reserved" });
     showToast(`${selected.id} release cancelled`);
     resetPanel();
   };
-
   const handleReleaseBooking = async () => {
     if (!selected) return;
     const base = computeStatus({ ...selected, booked_by: null });
@@ -349,20 +339,17 @@ export default function ParkShare() {
     showToast(`${selected.id} is now available`);
     resetPanel();
   };
-
   const handleAdminAssign = async () => {
     if (!selected) return;
     const status = editName.trim() ? "reserved" : "available";
     await updateSpot(selected.id, { owner: editName.trim(), status, released_from: null, released_until: null, booked_by: null });
     showToast(`${selected.id} assigned to "${editName.trim() || "open"}"`);
   };
-
   const handleAdminClearOwner = async () => {
     if (!selected) return;
     await updateSpot(selected.id, { owner: "", status: "available", released_from: null, released_until: null, booked_by: null });
     showToast(`${selected.id} set to open parking`);
   };
-
   const handleAdminCancelBooking = async () => {
     if (!selected) return;
     const base = computeStatus({ ...selected, booked_by: null });
@@ -370,14 +357,12 @@ export default function ParkShare() {
     showToast(`Booking for ${selected.id} cancelled`);
     resetPanel();
   };
-
   const handleAdminReleaseOnBehalf = async () => {
     if (!selected) return;
     await updateSpot(selected.id, { released_from: startDate, released_until: endDate, booked_by: null, status: "available" });
     showToast(`${selected.id} released: ${fmt(startDate)} – ${fmt(endDate)}`);
     resetPanel();
   };
-
   const unlockAdmin = () => {
     if (adminInput === ADMIN_CODE) { setIsAdmin(true); setAdminError(false); setShowAdminBox(false); showToast("Admin access granted"); }
     else setAdminError(true);
@@ -395,174 +380,181 @@ export default function ParkShare() {
     </div>
   );
 
+  const DRIVEWAY_W = 36;
+
   return (
-    <div style={{ background: "#0F6E56", minHeight: "100vh", padding: "20px 16px 80px", fontFamily: "system-ui, sans-serif" }}>
+    <div style={{ background: "#0F6E56", minHeight: "100vh", fontFamily: "system-ui, sans-serif", padding: "20px 16px 80px" }}>
 
-      {toast && (
-        <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: "#085041", color: "white", padding: "10px 18px", borderRadius: 8, zIndex: 999, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", boxShadow: "0 2px 12px rgba(0,0,0,0.3)" }}>
-          {toast}
-        </div>
-      )}
+        {toast && (
+          <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: "#085041", color: "white", padding: "10px 18px", borderRadius: 8, zIndex: 999, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", boxShadow: "0 2px 12px rgba(0,0,0,0.3)" }}>
+            {toast}
+          </div>
+        )}
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-        <div>
-          <div style={{ color: "white", fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>ParkShare</div>
-          <div style={{ color: "#9FE1CB", fontSize: 12 }}>Atlas Copco Group NZ</div>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => setShowRules(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#5DCAA5", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Rules</button>
-          {isAdmin
-            ? <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+          <div>
+            <div style={{ color: "white", fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>ParkShare</div>
+            <div style={{ color: "#9FE1CB", fontSize: 12 }}>Atlas Copco Group NZ</div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setShowRules(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#5DCAA5", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Rules</button>
+            {isAdmin ? (
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                 <span style={{ background: "#1D9E75", color: "white", borderRadius: 6, padding: "6px 12px", fontSize: 12, fontWeight: 600 }}>Admin ✓</span>
                 <button onClick={() => { setIsAdmin(false); setAdminInput(""); }} style={{ background: "transparent", border: "1px solid #ef4444", color: "#ef4444", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Log out</button>
               </div>
-            : <button onClick={() => setShowAdminBox(!showAdminBox)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#5DCAA5", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Admin</button>
-          }
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        {[
-          { label: "available", value: availCount, color: "#1D9E75" },
-          { label: "booked", value: bookedCount, color: "#B91C1C" },
-          { label: "reserved", value: reservedCount, color: "#9FE1CB" },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{ background: "#085041", borderRadius: 8, padding: "8px 0", flex: 1, textAlign: "center" }}>
-            <div style={{ color, fontSize: 20, fontWeight: 800 }}>{value}</div>
-            <div style={{ color: "#9FE1CB", fontSize: 10 }}>{label}</div>
+            ) : (
+              <button onClick={() => setShowAdminBox(!showAdminBox)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#5DCAA5", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Admin</button>
+            )}
           </div>
-        ))}
-      </div>
-
-      {/* Admin unlock */}
-      {showAdminBox && !isAdmin && (
-        <div style={{ background: "white", borderRadius: 10, padding: 14, marginBottom: 16 }}>
-          <p style={{ margin: "0 0 8px", fontWeight: 600, fontSize: 13, color: "#085041" }}>Admin access</p>
-          <input type="password" placeholder="Enter admin code" value={adminInput}
-            onChange={e => { setAdminInput(e.target.value); setAdminError(false); }}
-            onKeyDown={e => e.key === "Enter" && unlockAdmin()}
-            style={{ width: "100%", border: `1px solid ${adminError ? "#c00" : "#ddd"}`, borderRadius: 6, padding: "8px 10px", fontSize: 13, boxSizing: "border-box", marginBottom: 6 }} />
-          {adminError && <p style={{ color: "#c00", fontSize: 12, margin: "0 0 6px" }}>Incorrect code</p>}
-          <button onClick={unlockAdmin} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Unlock</button>
-        </div>
-      )}
-
-      {/* Legend */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
-        {Object.entries(C).map(([key, c]) => (
-          <div key={key} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: c.bg, border: `1px solid ${c.border}` }} />
-            <span style={{ fontSize: 11, color: "#9FE1CB" }}>{c.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Parking Map Layout */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-
-        {/* Left Driveway — full height, same width as horizontal driveway height */}
-        <div style={{ width: 36, flexShrink: 0, background: "#085041", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <span style={{ color: "#5DCAA5", fontSize: 9, fontWeight: 700, writingMode: "vertical-rl", transform: "rotate(180deg)", letterSpacing: 1, textTransform: "uppercase", whiteSpace: "nowrap" }}>
-            ← Driveway →
-          </span>
         </div>
 
-        {/* Main Area */}
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-
-          {/* B1-B7 — aligned LEFT */}
-          <div>
-            <p style={{ color: "#9FE1CB", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 4px", textAlign: "center" }}>Back parking</p>
-            <div style={{ background: "#085041", borderRadius: 8, padding: "8px 6px", overflowX: "auto" }}>
-              <div style={{ display: "flex", gap: 3, minWidth: "max-content" }}>
-                {back.map(s => <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} />)}
-              </div>
+        {/* Stats */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          {[
+            { label: "available", value: availCount, color: "#1D9E75" },
+            { label: "booked", value: bookedCount, color: "#B91C1C" },
+            { label: "reserved", value: reservedCount, color: "#9FE1CB" },
+          ].map(({ label, value, color }) => (
+            <div key={label} style={{ background: "#085041", borderRadius: 8, padding: "8px 0", flex: 1, textAlign: "center" }}>
+              <div style={{ color, fontSize: 20, fontWeight: 800 }}>{value}</div>
+              <div style={{ color: "#9FE1CB", fontSize: 10 }}>{label}</div>
             </div>
-          </div>
-
-          {/* Atlas Copco HQ — full width */}
-          <div style={{ background: "#E8DFC8", borderRadius: 8, height: 52, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: "#085041", fontWeight: 700, fontSize: 13 }}>Atlas Copco Group HQ</span>
-          </div>
-
-          {/* F1-F20 — full width */}
-          <div>
-            <p style={{ color: "#9FE1CB", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 4px", textAlign: "center" }}>Front parking</p>
-            <div style={{ background: "#085041", borderRadius: 8, padding: "8px 6px", overflowX: "auto", border: "1px solid #1D6B56" }}>
-              <div style={{ display: "flex", minWidth: "max-content" }}>
-                {front.map((s, i) => <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} isLast={i === front.length - 1} />)}
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Driveway — full width */}
-          <div style={{ background: "#085041", borderRadius: 8, padding: "6px 12px", textAlign: "center" }}>
-            <span style={{ color: "#5DCAA5", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>← Driveway →</span>
-          </div>
-
+          ))}
         </div>
-      </div>
 
-      {/* Small vertical driveway — T shape, aligned to 5th slot from right */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-        <div style={{ width: 36, flexShrink: 0 }} />
-        <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", paddingRight: `${4 * 50 + 11}px` }}>
-          <div style={{ width: 36, background: "#085041", borderRadius: 8, padding: "6px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: "#5DCAA5", fontSize: 8, fontWeight: 700, writingMode: "vertical-rl", transform: "rotate(180deg)", letterSpacing: 1, textTransform: "uppercase", whiteSpace: "nowrap" }}>
-              ↑ Driveway ↓
+        {/* Admin unlock */}
+        {showAdminBox && !isAdmin && (
+          <div style={{ background: "white", borderRadius: 10, padding: 14, marginBottom: 16 }}>
+            <p style={{ margin: "0 0 8px", fontWeight: 600, fontSize: 13, color: "#085041" }}>Admin access</p>
+            <input type="password" placeholder="Enter admin code" value={adminInput}
+              onChange={e => { setAdminInput(e.target.value); setAdminError(false); }}
+              onKeyDown={e => e.key === "Enter" && unlockAdmin()}
+              style={{ width: "100%", border: `1px solid ${adminError ? "#c00" : "#ddd"}`, borderRadius: 6, padding: "8px 10px", fontSize: 13, boxSizing: "border-box", marginBottom: 6 }} />
+            {adminError && <p style={{ color: "#c00", fontSize: 12, margin: "0 0 6px" }}>Incorrect code</p>}
+            <button onClick={unlockAdmin} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Unlock</button>
+          </div>
+        )}
+
+        {/* Legend */}
+        <div style={{ display: "flex", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
+          {Object.entries(C).map(([key, c]) => (
+            <div key={key} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: c.bg, border: `1px solid ${c.border}` }} />
+              <span style={{ fontSize: 11, color: "#9FE1CB" }}>{c.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Parking Map */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+          {/* Left Driveway */}
+          <div style={{ width: DRIVEWAY_W, flexShrink: 0, background: "#085041", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: "#5DCAA5", fontSize: 9, fontWeight: 700, writingMode: "vertical-rl", transform: "rotate(180deg)", letterSpacing: 1, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+              Driveway
             </span>
           </div>
-        </div>
-      </div>
 
-      {/* Great South Road — full width */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-        <div style={{ width: 36, flexShrink: 0 }} />
-        <div style={{ flex: 1, background: "#085041", borderRadius: 8, padding: "7px 12px", textAlign: "center" }}>
-          <span style={{ color: "#5DCAA5", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Great South Road</span>
-        </div>
-      </div>
+          {/* Main Area */}
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
 
-      {/* Spot Panel */}
-      <SpotPanel
-        spot={selected} isAdmin={isAdmin}
-        editName={editName} setEditName={setEditName}
-        bookingName={bookingName} setBookingName={setBookingName}
-        startDate={startDate} endDate={endDate}
-        onStartChange={handleStartChange} onEndChange={handleEndChange}
-        showReleasePicker={showReleasePicker} setShowReleasePicker={setShowReleasePicker}
-        showBookingInput={showBookingInput} setShowBookingInput={setShowBookingInput}
-        showConfirmRelease={showConfirmRelease} setShowConfirmRelease={setShowConfirmRelease}
-        onClose={() => { setSelected(null); resetPanel(); }}
-        onBook={handleBook} onRelease={handleRelease}
-        onCancelRelease={handleCancelRelease} onReleaseBooking={handleReleaseBooking}
-        onAdminAssign={handleAdminAssign} onAdminClearOwner={handleAdminClearOwner}
-        onAdminCancelBooking={handleAdminCancelBooking}
-        onAdminReleaseOnBehalf={handleAdminReleaseOnBehalf}
-      />
-
-      {/* Rules */}
-      {showRules && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16 }}>
-          <div style={{ background: "white", borderRadius: 14, padding: 20, maxWidth: 320, width: "100%" }}>
-            <h3 style={{ margin: "0 0 12px", color: "#085041", fontSize: 16 }}>Parking rules</h3>
-            <ul style={{ fontSize: 13, color: "#444", paddingLeft: 18, margin: "0 0 14px", lineHeight: 1.9 }}>
-              <li>Dedicated spots are assigned by HR</li>
-              <li>Open spots are available to anyone daily</li>
-              <li>Book a spot for today only</li>
-              <li>Release your dedicated spot for a date range (max 20 days)</li>
-              <li>All bookings reset at midnight NZST</li>
-              <li>If you leave early, please release your booked spot</li>
-            </ul>
-            <div style={{ fontSize: 13, color: "#555", marginBottom: 14 }}>
-              <strong>Contact HR:</strong><br />Christine Manlapaz<br />+64 21 488 953
+            {/* Back B1-B7 */}
+            <div>
+              <p style={{ color: "#9FE1CB", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 4px", textAlign: "center" }}>Back parking</p>
+              <div style={{ background: "#085041", borderRadius: 8, padding: "8px 6px", overflowX: "auto", border: "1px solid #1D6B56" }}>
+                <div style={{ display: "flex", minWidth: "max-content" }}>
+                  {back.map((s, i) => (
+                    <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} isLast={i === back.length - 1} />
+                  ))}
+                </div>
+              </div>
             </div>
-            <button onClick={() => setShowRules(false)} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Close</button>
+
+            {/* HQ */}
+            <div style={{ background: "#E8DFC8", borderRadius: 8, height: 52, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "#085041", fontWeight: 700, fontSize: 13 }}>Atlas Copco Group HQ</span>
+            </div>
+
+            {/* Front F1-F20 */}
+            <div>
+              <p style={{ color: "#9FE1CB", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 4px", textAlign: "center" }}>Front parking</p>
+              <div style={{ background: "#085041", borderRadius: 8, padding: "8px 6px", overflowX: "auto", border: "1px solid #1D6B56" }}>
+                <div style={{ display: "flex", minWidth: "max-content" }}>
+                  {front.map((s, i) => (
+                    <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} isLast={i === front.length - 1} />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Driveway */}
+            <div style={{ background: "#085041", borderRadius: 8, padding: "6px 12px", textAlign: "center" }}>
+              <span style={{ color: "#5DCAA5", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>← Driveway →</span>
+            </div>
+
           </div>
         </div>
-      )}
+
+        {/* Small vertical driveway — T shape, 5th slot from right */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+          <div style={{ width: DRIVEWAY_W, flexShrink: 0 }} />
+          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", paddingRight: "211px" }}>
+            <div style={{ width: DRIVEWAY_W, background: "#085041", borderRadius: 8, padding: "8px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "#5DCAA5", fontSize: 9, fontWeight: 700, writingMode: "vertical-rl", transform: "rotate(180deg)", letterSpacing: 1, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                Driveway
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Great South Road */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+          <div style={{ width: DRIVEWAY_W, flexShrink: 0 }} />
+          <div style={{ flex: 1, background: "#085041", borderRadius: 8, padding: "7px 12px", textAlign: "center" }}>
+            <span style={{ color: "#5DCAA5", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Great South Road</span>
+          </div>
+        </div>
+
+        {/* Spot Panel */}
+        <SpotPanel
+          spot={selected} isAdmin={isAdmin}
+          editName={editName} setEditName={setEditName}
+          bookingName={bookingName} setBookingName={setBookingName}
+          startDate={startDate} endDate={endDate}
+          onStartChange={handleStartChange} onEndChange={handleEndChange}
+          showReleasePicker={showReleasePicker} setShowReleasePicker={setShowReleasePicker}
+          showBookingInput={showBookingInput} setShowBookingInput={setShowBookingInput}
+          showConfirmRelease={showConfirmRelease} setShowConfirmRelease={setShowConfirmRelease}
+          onClose={() => { setSelected(null); resetPanel(); }}
+          onBook={handleBook} onRelease={handleRelease}
+          onCancelRelease={handleCancelRelease} onReleaseBooking={handleReleaseBooking}
+          onAdminAssign={handleAdminAssign} onAdminClearOwner={handleAdminClearOwner}
+          onAdminCancelBooking={handleAdminCancelBooking}
+          onAdminReleaseOnBehalf={handleAdminReleaseOnBehalf}
+        />
+
+        {/* Rules Modal */}
+        {showRules && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16 }}>
+            <div style={{ background: "white", borderRadius: 14, padding: 20, maxWidth: 320, width: "100%" }}>
+              <h3 style={{ margin: "0 0 12px", color: "#085041", fontSize: 16 }}>Parking rules</h3>
+              <ul style={{ fontSize: 13, color: "#444", paddingLeft: 18, margin: "0 0 14px", lineHeight: 1.9 }}>
+                <li>Dedicated spots are assigned by HR</li>
+                <li>Open spots are available to anyone daily</li>
+                <li>Book a spot for today only</li>
+                <li>Release your dedicated spot for a date range (max 20 days)</li>
+                <li>All bookings reset at midnight NZST</li>
+                <li>If you leave early, please release your booked spot</li>
+              </ul>
+              <div style={{ fontSize: 13, color: "#555", marginBottom: 14 }}>
+                <strong>Contact HR:</strong><br />Christine Manlapaz<br />+64 21 488 953
+              </div>
+              <button onClick={() => setShowRules(false)} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Close</button>
+            </div>
+          </div>
+        )}
+
     </div>
   );
 }
