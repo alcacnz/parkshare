@@ -460,8 +460,8 @@ export default function ParkShare() {
           {/* Main Area */}
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
 
-            {/* Back B1-B7 */}
-            <div>
+            {/* Back B1-B7 — 7/20 of full width, same spot spacing as front */}
+            <div style={{ width: "35%", display: "flex", flexDirection: "column" }}>
               <p style={{ color: "#9FE1CB", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 4px", textAlign: "center" }}>Back parking</p>
               <div style={{ background: "#085041", borderRadius: 8, padding: "8px 6px", border: "1px solid #1D6B56" }}>
                 <div style={{ display: "flex", width: "100%" }}>
