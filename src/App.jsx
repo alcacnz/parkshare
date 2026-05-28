@@ -97,6 +97,7 @@ function SpotTile({ spot, selected, onSelect, isLast }) {
         )}
       </div>
       <span style={{ fontSize: 9, color: "#9FE1CB", fontWeight: 700 }}>{spot.id}</span>
+      </div>
     </div>
   );
 }
@@ -126,6 +127,7 @@ function DateRangePicker({ startDate, endDate, onStartChange, onEndChange, onCon
       </p>
       <button onClick={onConfirm} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Confirm release</button>
       <button onClick={onCancel} style={btn("#f3f4f6", "#555", { marginBottom: 0 })}>Cancel</button>
+      </div>
     </div>
   );
 }
@@ -266,6 +268,7 @@ function SpotPanel({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -383,7 +386,8 @@ export default function ParkShare() {
   const DRIVEWAY_W = 36;
 
   return (
-    <div style={{ background: "#0F6E56", minHeight: "100vh", fontFamily: "system-ui, sans-serif", padding: "20px 16px 80px" }}>
+    <div style={{ background: "#0F6E56", minHeight: "100vh", fontFamily: "system-ui, sans-serif" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 16px 80px" }}>
 
         {toast && (
           <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: "#085041", color: "white", padding: "10px 18px", borderRadius: 8, zIndex: 999, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", boxShadow: "0 2px 12px rgba(0,0,0,0.3)" }}>
@@ -555,6 +559,7 @@ export default function ParkShare() {
           </div>
         )}
 
+      </div>
     </div>
   );
 }
