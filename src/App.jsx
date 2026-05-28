@@ -64,7 +64,7 @@ function SpotTile({ spot, selected, onSelect, isLast }) {
   const sel = selected?.id === spot.id;
   return (
     <div onClick={() => onSelect(spot)} style={{
-      width: 50, flexShrink: 0, cursor: "pointer",
+      flex: 1, minWidth: 36, cursor: "pointer",
       display: "flex", flexDirection: "column", alignItems: "center",
       gap: 2, padding: "4px 0",
       borderRight: isLast ? "none" : "1px solid #1D6B56",
@@ -97,7 +97,6 @@ function SpotTile({ spot, selected, onSelect, isLast }) {
         )}
       </div>
       <span style={{ fontSize: 9, color: "#9FE1CB", fontWeight: 700 }}>{spot.id}</span>
-      </div>
     </div>
   );
 }
@@ -127,7 +126,6 @@ function DateRangePicker({ startDate, endDate, onStartChange, onEndChange, onCon
       </p>
       <button onClick={onConfirm} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Confirm release</button>
       <button onClick={onCancel} style={btn("#f3f4f6", "#555", { marginBottom: 0 })}>Cancel</button>
-      </div>
     </div>
   );
 }
@@ -268,7 +266,6 @@ function SpotPanel({
           )}
         </div>
       )}
-      </div>
     </div>
   );
 }
@@ -466,8 +463,8 @@ export default function ParkShare() {
             {/* Back B1-B7 */}
             <div>
               <p style={{ color: "#9FE1CB", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 4px", textAlign: "center" }}>Back parking</p>
-              <div style={{ background: "#085041", borderRadius: 8, padding: "8px 6px", overflowX: "auto", border: "1px solid #1D6B56" }}>
-                <div style={{ display: "flex", minWidth: "max-content" }}>
+              <div style={{ background: "#085041", borderRadius: 8, padding: "8px 6px", border: "1px solid #1D6B56" }}>
+                <div style={{ display: "flex", width: "100%" }}>
                   {back.map((s, i) => (
                     <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} isLast={i === back.length - 1} />
                   ))}
@@ -483,8 +480,8 @@ export default function ParkShare() {
             {/* Front F1-F20 */}
             <div>
               <p style={{ color: "#9FE1CB", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 4px", textAlign: "center" }}>Front parking</p>
-              <div style={{ background: "#085041", borderRadius: 8, padding: "8px 6px", overflowX: "auto", border: "1px solid #1D6B56" }}>
-                <div style={{ display: "flex", minWidth: "max-content" }}>
+              <div style={{ background: "#085041", borderRadius: 8, padding: "8px 6px", border: "1px solid #1D6B56" }}>
+                <div style={{ display: "flex", width: "100%" }}>
                   {front.map((s, i) => (
                     <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} isLast={i === front.length - 1} />
                   ))}
