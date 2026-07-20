@@ -171,6 +171,28 @@ function TempTile({ label, isLast }) {
   );
 }
 
+// ─── DOOR TILE ───────────────────────────────────────────────────────────────
+function DoorTile() {
+  return (
+    <div style={{
+      flex: 1, minWidth: 36,
+      display: "flex", flexDirection: "column", alignItems: "center",
+      gap: 2, padding: "4px 0",
+      borderRight: "1px solid #444444",
+    }}>
+      <span style={{ fontSize: 9, color: "#cccccc", fontWeight: 600 }}>{" "}</span>
+      <div style={{
+        width: 36, height: 52, borderRadius: 3,
+        background: "#888888", border: "1px solid #666666",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <span style={{ fontSize: 8, color: "#dddddd", fontWeight: 700, textAlign: "center" }}>DOOR</span>
+      </div>
+      <span style={{ fontSize: 9, color: "#cccccc", fontWeight: 700 }}>{" "}</span>
+    </div>
+  );
+}
+
 // ─── DATE RANGE PICKER ────────────────────────────────────────────────────────
 function DateRangePicker({ startDate, endDate, onStartChange, onEndChange, onConfirm, onCancel }) {
   const today = todayNZ();
@@ -219,7 +241,8 @@ function SpotPanel({
   const c = C[status];
 
   return (
-    <div style={{ background: "white", borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: "0 2px 16px rgba(0,0,0,0.13)" }}>
+    <div style={{ maxWidth: 480, margin: "0 auto", marginBottom: 16 }}>
+    <div style={{ background: "white", borderRadius: 12, padding: 16, boxShadow: "0 2px 16px rgba(0,0,0,0.13)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
         <div>
           <div style={{ fontWeight: 700, fontSize: 18, color: "#085041" }}>Spot {spot.id}</div>
@@ -336,6 +359,7 @@ function SpotPanel({
           )}
         </div>
       )}
+    </div>
     </div>
   );
 }
@@ -571,7 +595,7 @@ export default function ParkShare() {
 
   return (
     <div style={{ background: "#0F6E56", minHeight: "100vh", fontFamily: "system-ui, sans-serif" }}>
-      <div style={{ padding: "20px 16px 80px" }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "20px 16px 80px" }}>
 
         {/* Toast */}
         {toast && (
@@ -617,16 +641,21 @@ export default function ParkShare() {
           ))}
         </div>
 
-        {/* Admin unlock */}
+        {/* Admin unlock modal */}
         {showAdminBox && !isAdmin && (
-          <div style={{ background: "white", borderRadius: 10, padding: 14, marginBottom: 16 }}>
-            <p style={{ margin: "0 0 8px", fontWeight: 600, fontSize: 13, color: "#085041" }}>Admin access</p>
-            <input type="password" placeholder="Enter admin code" value={adminInput}
-              onChange={e => { setAdminInput(e.target.value); setAdminError(false); }}
-              onKeyDown={e => e.key === "Enter" && unlockAdmin()}
-              style={{ width: "100%", border: `1px solid ${adminError ? "#c00" : "#ddd"}`, borderRadius: 6, padding: "8px 10px", fontSize: 13, boxSizing: "border-box", marginBottom: 6 }} />
-            {adminError && <p style={{ color: "#c00", fontSize: 12, margin: "0 0 6px" }}>Incorrect code</p>}
-            <button onClick={unlockAdmin} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Unlock</button>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16 }}>
+            <div style={{ background: "white", borderRadius: 14, padding: 20, maxWidth: 360, width: "100%" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                <h3 style={{ margin: 0, color: "#085041", fontSize: 16 }}>Admin Access</h3>
+                <button onClick={() => setShowAdminBox(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#aaa" }}>✕</button>
+              </div>
+              <input type="password" placeholder="Enter admin code" value={adminInput}
+                onChange={e => { setAdminInput(e.target.value); setAdminError(false); }}
+                onKeyDown={e => e.key === "Enter" && unlockAdmin()}
+                style={{ width: "100%", border: `1px solid ${adminError ? "#c00" : "#ddd"}`, borderRadius: 6, padding: "8px 10px", fontSize: 13, boxSizing: "border-box", marginBottom: 6 }} />
+              {adminError && <p style={{ color: "#c00", fontSize: 12, margin: "0 0 6px" }}>Incorrect code</p>}
+              <button onClick={unlockAdmin} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Unlock</button>
+            </div>
           </div>
         )}
 
@@ -667,7 +696,7 @@ export default function ParkShare() {
                 {/* Back parking + HQ right side in same row */}
                 <div style={{ display: "flex", gap: 0, alignItems: "stretch" }}>
                   {/* Left: back driveway + spots */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "45%", flexShrink: 0 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "50%", flexShrink: 0 }}>
                     <div style={{ background: "#666666", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
                       <span style={{ color: "#cccccc", fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>← Driveway →</span>
                     </div>
@@ -682,9 +711,18 @@ export default function ParkShare() {
                   <span style={{ color: "#085041", fontWeight: 700, fontSize: 18 }}>Atlas Copco Group HQ</span>
                 </div>
 
-                {/* Front parking 1-20 + spot 29 */}
+                {/* Front parking: Door + 1-20 + spot 29 */}
                 <div style={{ display: "flex", gap: 6 }}>
-                  <div style={{ flex: 1 }}>{spotRow(frontSpots)}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ background: "#666666", borderRadius: 8, padding: "8px 6px", border: "1px solid #444444" }}>
+                      <div style={{ display: "flex", width: "100%" }}>
+                        <DoorTile />
+                        {frontSpots.map((s, i) => (
+                          <SpotTile key={s.id} spot={s} selected={selected} onSelect={selectSpot} isLast={i === frontSpots.length - 1} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                   {spot29 && (
                     <div style={{ background: "#666666", borderRadius: 8, padding: "8px 6px", border: "2px dashed #9ca3af" }}>
                       <SpotTile spot={spot29} selected={selected} onSelect={selectSpot} isLast={true} />
@@ -731,23 +769,29 @@ export default function ParkShare() {
         </div>
         </div>
 
-        {/* Spot Panel */}
-        <SpotPanel
-          spot={selected} isAdmin={isAdmin}
-          editName={editName} setEditName={setEditName}
-          bookingName={bookingName} setBookingName={setBookingName}
-          startDate={startDate} endDate={endDate}
-          onStartChange={handleStartChange} onEndChange={handleEndChange}
-          showReleasePicker={showReleasePicker} setShowReleasePicker={setShowReleasePicker}
-          showBookingInput={showBookingInput} setShowBookingInput={setShowBookingInput}
-          showConfirmRelease={showConfirmRelease} setShowConfirmRelease={setShowConfirmRelease}
-          onClose={() => { setSelected(null); resetPanel(); }}
-          onBook={handleBook} onRelease={handleRelease}
-          onCancelRelease={handleCancelRelease} onReleaseBooking={handleReleaseBooking}
-          onAdminAssign={handleAdminAssign} onAdminClearOwner={handleAdminClearOwner}
-          onAdminCancelBooking={handleAdminCancelBooking}
-          onAdminReleaseOnBehalf={handleAdminReleaseOnBehalf}
-        />
+        {/* Spot Panel Modal */}
+        {selected && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16 }}>
+            <div style={{ maxWidth: 480, width: "100%" }}>
+              <SpotPanel
+                spot={selected} isAdmin={isAdmin}
+                editName={editName} setEditName={setEditName}
+                bookingName={bookingName} setBookingName={setBookingName}
+                startDate={startDate} endDate={endDate}
+                onStartChange={handleStartChange} onEndChange={handleEndChange}
+                showReleasePicker={showReleasePicker} setShowReleasePicker={setShowReleasePicker}
+                showBookingInput={showBookingInput} setShowBookingInput={setShowBookingInput}
+                showConfirmRelease={showConfirmRelease} setShowConfirmRelease={setShowConfirmRelease}
+                onClose={() => { setSelected(null); resetPanel(); }}
+                onBook={handleBook} onRelease={handleRelease}
+                onCancelRelease={handleCancelRelease} onReleaseBooking={handleReleaseBooking}
+                onAdminAssign={handleAdminAssign} onAdminClearOwner={handleAdminClearOwner}
+                onAdminCancelBooking={handleAdminCancelBooking}
+                onAdminReleaseOnBehalf={handleAdminReleaseOnBehalf}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Schedule Manager */}
         {showSchedule && (
