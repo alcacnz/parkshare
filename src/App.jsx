@@ -730,8 +730,10 @@ export default function ParkShare() {
 
   const handleRelease = async () => {
     if (!selected) return;
-    await updateSpot(selected.id, { booked_by: null, status: "available", released_from: startDate, released_until: endDate });
-    showToast(`Spot ${selected.id} released: ${fmt(startDate)} – ${fmt(endDate)}`);
+    const today = todayNZ();
+    const status = startDate <= today ? "available" : "reserved";
+    await updateSpot(selected.id, { booked_by: null, status, released_from: startDate, released_until: endDate });
+    showToast(`Spot ${selected.id} release set: ${fmt(startDate)} – ${fmt(endDate)}`);
     resetPanel();
   };
 
