@@ -575,7 +575,12 @@ function SpotPanel({ spot, isAdmin, currentUser, showReleasePicker, setShowRelea
                 <button onClick={() => setShowBookingInput(false)} style={btn("#f3f4f6", "#555", { marginBottom: 0 })}>Cancel</button>
               </>
             ) : (
-              <button onClick={() => setShowBookingInput(true)} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Book this spot</button>
+              <>
+                <button onClick={() => setShowBookingInput(true)} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Book this spot</button>
+                {isMySpot && spot.released_from && (
+                  <button onClick={onCancelRelease} style={btn("#fff4f4", "#B91C1C", { border: "1px solid #fcc", marginBottom: 0 })}>Cancel my release</button>
+                )}
+              </>
             )
           )}
           {status === "reserved" && (
