@@ -243,7 +243,6 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
               <select value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}
                 style={{ flex: 1, minWidth: 100, border: "1px solid #ddd", borderRadius: 6, padding: "7px 10px", fontSize: 13 }}>
                 <option value="staff">Staff</option>
-                <option value="admin">Admin</option>
               </select>
               <select value={form.spot_id} onChange={e => setForm(p => ({ ...p, spot_id: e.target.value }))}
                 style={{ flex: 1, minWidth: 100, border: "1px solid #ddd", borderRadius: 6, padding: "7px 10px", fontSize: 13 }}>
@@ -291,11 +290,14 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
                             style={{ width: 100, border: "1px solid #ddd", borderRadius: 4, padding: "4px 6px", fontSize: 12 }} />
                         </td>
                         <td style={{ padding: "6px 4px" }}>
-                          <select value={u._role ?? u.role} onChange={e => editField(u.id, "_role", e.target.value)}
-                            style={{ border: "1px solid #ddd", borderRadius: 4, padding: "4px 6px", fontSize: 12 }}>
-                            <option value="staff">Staff</option>
-                            <option value="admin">Admin</option>
-                          </select>
+                          {u.role === "admin" ? (
+                            <span style={{ fontSize: 12, color: "#666" }}>admin</span>
+                          ) : (
+                            <select value={u._role ?? u.role} onChange={e => editField(u.id, "_role", e.target.value)}
+                              style={{ border: "1px solid #ddd", borderRadius: 4, padding: "4px 6px", fontSize: 12 }}>
+                              <option value="staff">Staff</option>
+                            </select>
+                          )}
                         </td>
                         <td style={{ padding: "6px 4px" }}>
                           <select value={u._spot ?? u.spot_id} onChange={e => editField(u.id, "_spot", e.target.value)}
@@ -323,7 +325,9 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
                         <td style={{ padding: "8px 10px" }}>
                           <div style={{ display: "flex", gap: 4 }}>
                             <button onClick={() => setEditingId(u.id)} style={{ background: "#f3f4f6", color: "#555", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>Edit</button>
-                            <button onClick={() => handleDelete(u.id)} style={{ background: "#fff4f4", color: "#B91C1C", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>Delete</button>
+                            {u.role !== "admin" && (
+                              <button onClick={() => handleDelete(u.id)} style={{ background: "#fff4f4", color: "#B91C1C", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>Delete</button>
+                            )}
                           </div>
                         </td>
                       </>
