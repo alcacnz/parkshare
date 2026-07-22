@@ -232,7 +232,7 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
           <div style={{ background: "#f9fafb", borderRadius: 10, padding: 14, marginBottom: 14, border: "1px solid #e5e7eb" }}>
             <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: 14, color: "#085041" }}>New User</p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <input value={form.first_name} onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))} placeholder="Name (full name, nickname or initials)"
+              <input value={form.first_name} onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))} placeholder="Name"
                 style={{ flex: 1, minWidth: 120, border: "1px solid #ddd", borderRadius: 6, padding: "7px 10px", fontSize: 13 }} />
 
               <input value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} placeholder="Username"
@@ -262,7 +262,7 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ background: "#f9fafb", borderBottom: "2px solid #e5e7eb" }}>
-                  {["Name / Nickname", "Username", "Password", "Role", "Spot", ""].map(h => (
+                  {["Name", "Username", "Password", "Role", "Spot", ""].map(h => (
                     <th key={h} style={{ padding: "8px 10px", textAlign: "left", fontSize: 12, color: "#666", fontWeight: 700 }}>{h}</th>
                   ))}
                 </tr>
