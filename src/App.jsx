@@ -65,7 +65,7 @@ function getTodayDayNum() {
   const day = new Date().toLocaleDateString("en-US", { timeZone: NZ_TIMEZONE, weekday: "short" });
   return { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5 }[day.slice(0, 3)];
 }
-function fullName(user) { return `${user.first_name} ${user.last_name}`; }
+function fullName(user) { return user.first_name || ""; }
 
 function isDedicated(spot) { return !!spot.owner; }
 function computeStatus(spot) {
@@ -169,7 +169,7 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
   const resetForm = () => setForm({ first_name: "", last_name: "", username: "", password: "", role: "staff", spot_id: "" });
 
   const handleAdd = async () => {
-    if (!form.first_name || !form.last_name || !form.username || !form.password) { showToast("All fields required"); return; }
+    if (!form.first_name || !form.username || !form.password) { showToast("First name, username and password required"); return; }
     setSaving(true);
     await createUser(form);
     // Sync parking spot owner
@@ -232,7 +232,7 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
           <div style={{ background: "#f9fafb", borderRadius: 10, padding: 14, marginBottom: 14, border: "1px solid #e5e7eb" }}>
             <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: 14, color: "#085041" }}>New User</p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <input value={form.first_name} onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))} placeholder="First name"
+              <input value={form.first_name} onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))} placeholder="Name (full name, nickname or initials)"
                 style={{ flex: 1, minWidth: 120, border: "1px solid #ddd", borderRadius: 6, padding: "7px 10px", fontSize: 13 }} />
               <input value={form.last_name} onChange={e => setForm(p => ({ ...p, last_name: e.target.value }))} placeholder="Last name"
                 style={{ flex: 1, minWidth: 120, border: "1px solid #ddd", borderRadius: 6, padding: "7px 10px", fontSize: 13 }} />
@@ -263,7 +263,7 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ background: "#f9fafb", borderBottom: "2px solid #e5e7eb" }}>
-                  {["Name", "Username", "Password", "Role", "Spot", ""].map(h => (
+                  {["Name / Nickname", "Username", "Password", "Role", "Spot", ""].map(h => (
                     <th key={h} style={{ padding: "8px 10px", textAlign: "left", fontSize: 12, color: "#666", fontWeight: 700 }}>{h}</th>
                   ))}
                 </tr>
@@ -274,12 +274,8 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
                     {editingId === u.id ? (
                       <>
                         <td style={{ padding: "6px 4px" }}>
-                          <div style={{ display: "flex", gap: 4 }}>
-                            <input value={u._fn ?? u.first_name} onChange={e => editField(u.id, "_fn", e.target.value)}
-                              style={{ width: 80, border: "1px solid #ddd", borderRadius: 4, padding: "4px 6px", fontSize: 12 }} />
-                            <input value={u._ln ?? u.last_name} onChange={e => editField(u.id, "_ln", e.target.value)}
-                              style={{ width: 80, border: "1px solid #ddd", borderRadius: 4, padding: "4px 6px", fontSize: 12 }} />
-                          </div>
+                          <input value={u._fn ?? u.first_name} onChange={e => editField(u.id, "_fn", e.target.value)}
+                            style={{ width: 160, border: "1px solid #ddd", borderRadius: 4, padding: "4px 6px", fontSize: 12 }} />
                         </td>
                         <td style={{ padding: "6px 4px" }}>
                           <input value={u._un ?? u.username} onChange={e => editField(u.id, "_un", e.target.value)}
@@ -315,7 +311,7 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
                       </>
                     ) : (
                       <>
-                        <td style={{ padding: "8px 10px" }}>{u.first_name} {u.last_name}</td>
+                        <td style={{ padding: "8px 10px" }}>{u.first_name}</td>
                         <td style={{ padding: "8px 10px", color: "#666" }}>{u.username}</td>
                         <td style={{ padding: "8px 10px", color: "#999" }}>••••••</td>
                         <td style={{ padding: "8px 10px" }}>
