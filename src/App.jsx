@@ -613,11 +613,20 @@ function SpotPanel({ spot, isAdmin, currentUser, userHasBooking, userBookedSpot,
                 <>
                   <div style={{ background: "#FFF8E1", borderRadius: 8, padding: "10px 12px" }}>
                     <p style={{ color: "#92620A", fontWeight: 600, fontSize: 13, margin: 0 }}>This is your spot</p>
+                    {spot.released_from && (
+                      <p style={{ color: "#0F6E56", fontSize: 11, margin: "4px 0 0", fontWeight: 600 }}>
+                        Upcoming release: {fmt(spot.released_from)} – {fmt(spot.released_until)}
+                      </p>
+                    )}
                   </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={onReleaseToday} style={{ ...btn("#085041", "white", { marginBottom: 0 }), flex: 1 }}>Today only</button>
-                    <button onClick={() => setShowReleasePicker(true)} style={{ ...btn("#0a5c47", "white", { marginBottom: 0 }), flex: 1 }}>Select period</button>
-                  </div>
+                  {spot.released_from ? (
+                    <button onClick={onCancelRelease} style={btn("#fff4f4", "#B91C1C", { border: "1px solid #fcc", marginBottom: 0 })}>Cancel upcoming release</button>
+                  ) : (
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={onReleaseToday} style={{ ...btn("#085041", "white", { marginBottom: 0 }), flex: 1 }}>Today only</button>
+                      <button onClick={() => setShowReleasePicker(true)} style={{ ...btn("#0a5c47", "white", { marginBottom: 0 }), flex: 1 }}>Select period</button>
+                    </div>
+                  )}
                 </>
               )
             ) : (
