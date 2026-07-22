@@ -69,15 +69,19 @@ function fullName(user) { return user.first_name || ""; }
 
 function isDedicated(spot) { return !!spot.owner; }
 function computeStatus(spot) {
+  // booked_by is always real-time source of truth
   if (spot.booked_by) return "booked";
   if (!isDedicated(spot)) return "available";
+  // Trust DB status for released/WFH (set by midnight reset or manual release)
+  if (spot.status === "available") return "available";
+  // Real-time WFH check (for during-day accuracy)
+  const dayNum = getTodayDayNum();
+  if (dayNum && spot.wfh_days && spot.wfh_days.split(",").map(d => d.trim()).includes(String(dayNum))) return "available";
+  // Real-time release check
   const today = todayNZ();
-  // Slice to YYYY-MM-DD to handle Supabase timezone formats
   const relFrom = spot.released_from ? spot.released_from.substring(0, 10) : null;
   const relUntil = spot.released_until ? spot.released_until.substring(0, 10) : null;
   if (relFrom && relUntil && today >= relFrom && today <= relUntil) return "available";
-  const dayNum = getTodayDayNum();
-  if (dayNum && spot.wfh_days && spot.wfh_days.split(",").map(d => d.trim()).includes(String(dayNum))) return "available";
   return "reserved";
 }
 
