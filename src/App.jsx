@@ -160,20 +160,20 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ first_name: "", last_name: "", username: "", password: "", role: "staff", spot_id: "" });
+  const [form, setForm] = useState({ first_name: "", username: "", password: "", role: "staff", spot_id: "" });
   const [saving, setSaving] = useState(false);
 
   const load = () => fetchUsers().then(data => { setUsers(data); setLoading(false); });
   useEffect(() => { load(); }, []);
 
-  const resetForm = () => setForm({ first_name: "", last_name: "", username: "", password: "", role: "staff", spot_id: "" });
+  const resetForm = () => setForm({ first_name: "", username: "", password: "", role: "staff", spot_id: "" });
 
   const handleAdd = async () => {
     if (!form.first_name || !form.username || !form.password) { showToast("First name, username and password required"); return; }
     setSaving(true);
     await createUser(form);
     // Sync parking spot owner
-    await syncSpotOwner(form.spot_id, form.spot_id ? `${form.first_name} ${form.last_name}` : "");
+    await syncSpotOwner(form.spot_id, form.spot_id ? form.first_name : "");
     await load();
     setSaving(false);
     setShowAdd(false);
@@ -187,8 +187,8 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
     const u = users.find(u => u.id === id);
     const newSpot = u._spot ?? u.spot_id;
     const oldSpot = u.spot_id;
-    const newName = `${u._fn ?? u.first_name} ${u._ln ?? u.last_name}`;
-    await updateUser(id, { first_name: u._fn ?? u.first_name, last_name: u._ln ?? u.last_name, username: u._un ?? u.username, password: u._pw ?? u.password, role: u._role ?? u.role, spot_id: newSpot });
+    const newName = u._fn ?? u.first_name;
+    await updateUser(id, { first_name: u._fn ?? u.first_name, username: u._un ?? u.username, password: u._pw ?? u.password, role: u._role ?? u.role, spot_id: newSpot });
     // Sync spots
     if (oldSpot && oldSpot !== newSpot) await syncSpotOwner(oldSpot, "");
     if (newSpot) await syncSpotOwner(newSpot, newName);
@@ -234,8 +234,7 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <input value={form.first_name} onChange={e => setForm(p => ({ ...p, first_name: e.target.value }))} placeholder="Name (full name, nickname or initials)"
                 style={{ flex: 1, minWidth: 120, border: "1px solid #ddd", borderRadius: 6, padding: "7px 10px", fontSize: 13 }} />
-              <input value={form.last_name} onChange={e => setForm(p => ({ ...p, last_name: e.target.value }))} placeholder="Last name"
-                style={{ flex: 1, minWidth: 120, border: "1px solid #ddd", borderRadius: 6, padding: "7px 10px", fontSize: 13 }} />
+
               <input value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} placeholder="Username"
                 style={{ flex: 1, minWidth: 120, border: "1px solid #ddd", borderRadius: 6, padding: "7px 10px", fontSize: 13 }} />
               <input value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="Password"
