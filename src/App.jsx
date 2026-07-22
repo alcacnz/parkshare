@@ -525,7 +525,7 @@ function UserSelect({ value, onChange }) {
 }
 
 // ─── SPOT PANEL ───────────────────────────────────────────────────────────────
-function SpotPanel({ spot, isAdmin, currentUser, showReleasePicker, setShowReleasePicker, showReleaseNameInput, setShowReleaseNameInput, releaseNameError, setReleaseNameError, showBookingInput, setShowBookingInput, showConfirmRelease, setShowConfirmRelease, startDate, endDate, onStartChange, onEndChange, onClose, onBook, onRelease, onReleaseToday, onCancelRelease, onReleaseBooking, onAdminAssign, onAdminClearOwner, onAdminCancelBooking, editName, setEditName }) {
+function SpotPanel({ spot, isAdmin, currentUser, userHasBooking, userBookedSpot, showReleasePicker, setShowReleasePicker, showReleaseNameInput, setShowReleaseNameInput, releaseNameError, setReleaseNameError, showBookingInput, setShowBookingInput, showConfirmRelease, setShowConfirmRelease, startDate, endDate, onStartChange, onEndChange, onClose, onBook, onRelease, onReleaseToday, onCancelRelease, onReleaseBooking, onAdminAssign, onAdminClearOwner, onAdminCancelBooking, editName, setEditName }) {
   if (!spot) return null;
   const status = computeStatus(spot);
   const dedicated = isDedicated(spot);
@@ -576,7 +576,13 @@ function SpotPanel({ spot, isAdmin, currentUser, showReleasePicker, setShowRelea
               </>
             ) : (
               <>
-                <button onClick={() => setShowBookingInput(true)} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Book this spot</button>
+                {!userHasBooking ? (
+                  <button onClick={() => setShowBookingInput(true)} style={btn("#0F6E56", "white", { marginBottom: 0 })}>Book this spot</button>
+                ) : (
+                  <div style={{ background: "#FFF8E1", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
+                    <p style={{ color: "#92620A", fontSize: 13, margin: 0, fontWeight: 600 }}>You already have a booking on Spot {userBookedSpot}</p>
+                  </div>
+                )}
                 {isMySpot && spot.released_from && (
                   <button onClick={onCancelRelease} style={btn("#fff4f4", "#B91C1C", { border: "1px solid #fcc", marginBottom: 0 })}>Cancel my release</button>
                 )}
@@ -695,6 +701,14 @@ export default function ParkShare() {
   const handleBook = async () => {
     if (!selected) return;
     const latest = await fetchSpots();
+    // Check if user already has a booking
+    const alreadyBooked = latest.find(s => s.booked_by === fullName(currentUser));
+    if (alreadyBooked) {
+      showToast(`You already have a booking on Spot ${alreadyBooked.id}`);
+      resetPanel();
+      return;
+    }
+    // Check if spot was just taken
     const current = latest.find(s => s.id === selected.id);
     if (current?.booked_by) { showToast("Just booked by someone else!"); resetPanel(); setSpots(latest); return; }
     await updateSpot(selected.id, { booked_by: fullName(currentUser), status: "booked" });
@@ -911,6 +925,8 @@ export default function ParkShare() {
             <div style={{ maxWidth: 480, width: "100%" }}>
               <SpotPanel
                 spot={selected} isAdmin={isAdmin} currentUser={currentUser}
+                userHasBooking={spots.some(s => s.booked_by === fullName(currentUser))}
+                userBookedSpot={spots.find(s => s.booked_by === fullName(currentUser))?.id}
                 editName={editName} setEditName={setEditName}
                 showReleasePicker={showReleasePicker} setShowReleasePicker={setShowReleasePicker}
                 showReleaseNameInput={showReleaseNameInput} setShowReleaseNameInput={setShowReleaseNameInput}
