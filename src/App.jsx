@@ -747,7 +747,12 @@ export default function ParkShare() {
 
   const handleCancelRelease = async () => {
     if (!selected) return;
-    await updateSpot(selected.id, { released_from: null, released_until: null, booked_by: null, status: "reserved" });
+    // Check if today is a WFH day for this spot
+    const dayNum = getTodayDayNum();
+    const isWfhToday = dayNum && selected.wfh_days &&
+      selected.wfh_days.split(",").map(d => d.trim()).includes(String(dayNum));
+    const status = isWfhToday ? "available" : "reserved";
+    await updateSpot(selected.id, { released_from: null, released_until: null, booked_by: null, status });
     showToast(`Release cancelled`);
     resetPanel();
   };
