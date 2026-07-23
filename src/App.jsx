@@ -166,6 +166,7 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ first_name: "", username: "", password: "", role: "staff", spot_id: "" });
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   const load = () => fetchUsers().then(data => { setUsers(data); setLoading(false); });
   useEffect(() => { load(); }, []);
@@ -272,7 +273,10 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
                 </tr>
               </thead>
               <tbody>
-                {users.map(u => (
+                {users.filter(u => {
+                  const q = search.toLowerCase();
+                  return !q || u.first_name?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q);
+                }).map(u => (
                   <tr key={u.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
                     {editingId === u.id ? (
                       <>
@@ -486,13 +490,19 @@ function AllocationManager({ onClose, showToast, onSpotsUpdated }) {
           {localSpots.map(spot => (
             <div key={spot.id} style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <span style={{ width: 32, fontSize: 13, fontWeight: 700, color: "#085041", flexShrink: 0 }}>{spot.id}</span>
-              <select value={spot._owner} onChange={e => handleOwnerChange(spot.id, e.target.value)}
-                style={{ flex: 1, border: "1px solid #ddd", borderRadius: 6, padding: "6px 8px", fontSize: 13, boxSizing: "border-box", background: "white" }}>
+              <input
+                list={`users-list-${spot.id}`}
+                value={spot._owner}
+                onChange={e => handleOwnerChange(spot.id, e.target.value)}
+                placeholder="Type to search user..."
+                style={{ flex: 1, border: "1px solid #ddd", borderRadius: 6, padding: "6px 8px", fontSize: 13, boxSizing: "border-box" }}
+              />
+              <datalist id={`users-list-${spot.id}`}>
                 <option value="">— No owner —</option>
                 {users.sort((a,b) => a.first_name.localeCompare(b.first_name)).map(u => (
-                  <option key={u.id} value={fullName(u)}>{fullName(u)}</option>
+                  <option key={u.id} value={fullName(u)} />
                 ))}
-              </select>
+              </datalist>
               <div style={{ display: "flex", gap: 3, width: 190 }}>
                 {DAYS.map((day, i) => {
                   const num = String(i + 1);
