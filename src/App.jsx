@@ -264,6 +264,12 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
         {/* User list */}
         {loading ? <p style={{ textAlign: "center", color: "#888" }}>Loading...</p> : (
           <div style={{ overflowY: "auto", flex: 1 }}>
+        <input
+          value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search by name or username..."
+          style={{ width: "100%", border: "1px solid #ddd", borderRadius: 6, padding: "8px 10px", fontSize: 13, boxSizing: "border-box", marginBottom: 10 }}
+        />
+
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ background: "#f9fafb", borderBottom: "2px solid #e5e7eb" }}>
