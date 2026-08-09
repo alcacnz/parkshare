@@ -518,6 +518,74 @@ function ChangePasswordModal({ currentUser, onClose, showToast, onPasswordChange
   );
 }
 
+// ─── MY SPOT (RELEASE MANAGER) ──────────────────────────────────────────────
+function MySpotModal({ mySpot, onClose, showReleasePicker, setShowReleasePicker, startDate, endDate, onStartChange, onEndChange, onRelease, onReleaseToday, onCancelRelease }) {
+  if (!mySpot) return null;
+  const today = todayNZ();
+  const hasUpcomingRelease = mySpot.released_from && mySpot.released_until && mySpot.released_until.substring(0, 10) >= today;
+  const liveStatus = computeStatus(mySpot);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 16 }}>
+      <div style={{ background: "white", borderRadius: 14, padding: 20, width: "100%", maxWidth: 380 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+          <h3 style={{ margin: 0, color: "#085041", fontSize: 16 }}>Manage My Spot</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#aaa" }}>✕</button>
+        </div>
+        <p style={{ margin: "0 0 14px", fontSize: 13, color: "#888" }}>Spot {mySpot.id}</p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ background: "#f0fdf9", borderRadius: 8, padding: "10px 12px" }}>
+            <p style={{ margin: 0, fontSize: 12, color: "#085041" }}>
+              Currently showing as <strong>{C[liveStatus]?.label || liveStatus}</strong> today
+              {liveStatus === "available" && mySpot.wfh_days ? " (WFH day)" : ""}.
+            </p>
+            <p style={{ margin: "4px 0 0", fontSize: 11, color: "#888" }}>Use this panel to schedule or cancel a release regardless of today's status.</p>
+          </div>
+
+          {hasUpcomingRelease && (
+            <div style={{ background: "#FFF8E1", borderRadius: 8, padding: "10px 12px" }}>
+              <p style={{ color: "#92620A", fontSize: 12, margin: 0, fontWeight: 600 }}>
+                Upcoming release: {fmt(mySpot.released_from)} – {fmt(mySpot.released_until)}
+              </p>
+            </div>
+          )}
+
+          {showReleasePicker ? (
+            <>
+              <p style={{ margin: 0, fontSize: 12, color: "#555", fontWeight: 600 }}>Select release period</p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 3 }}>From</label>
+                  <input type="date" value={startDate} min={todayNZ()} onChange={e => onStartChange(e.target.value)}
+                    style={{ width: "100%", border: "1px solid #ddd", borderRadius: 6, padding: "7px 8px", fontSize: 13, boxSizing: "border-box" }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 3 }}>To</label>
+                  <input type="date" value={endDate} min={startDate} onChange={e => onEndChange(e.target.value)}
+                    style={{ width: "100%", border: "1px solid #ddd", borderRadius: 6, padding: "7px 8px", fontSize: 13, boxSizing: "border-box" }} />
+                </div>
+              </div>
+              <button onClick={onRelease} style={btn("#085041", "white", { marginBottom: 0 })}>Confirm period release</button>
+              <button onClick={() => setShowReleasePicker(false)} style={btn("#f3f4f6", "#555", { marginBottom: 0 })}>Back</button>
+            </>
+          ) : (
+            <>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={onReleaseToday} style={{ ...btn("#085041", "white", { marginBottom: 0 }), flex: 1 }}>Today only</button>
+                <button onClick={() => setShowReleasePicker(true)} style={{ ...btn("#0a5c47", "white", { marginBottom: 0 }), flex: 1 }}>Select period</button>
+              </div>
+              {hasUpcomingRelease && (
+                <button onClick={onCancelRelease} style={btn("#fff4f4", "#B91C1C", { border: "1px solid #fcc", marginBottom: 0 })}>Cancel upcoming release</button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── SPOT TILES ───────────────────────────────────────────────────────────────
 function SpotTile({ spot, selected, onSelect, isLast, currentUser }) {
   const disabled = DISABLED_SPOTS.includes(spot.id);
@@ -856,6 +924,10 @@ export default function ParkShare() {
   const [showUserManager, setShowUserManager] = useState(false);
   const [showDirectory, setShowDirectory] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showMySpot, setShowMySpot] = useState(false);
+  const [myShowReleasePicker, setMyShowReleasePicker] = useState(false);
+  const [myStartDate, setMyStartDate] = useState(todayNZ());
+  const [myEndDate, setMyEndDate] = useState(todayNZ());
   const [toast, setToast] = useState(null);
   const [editName, setEditName] = useState("");
   const [showReleasePicker, setShowReleasePicker] = useState(false);
@@ -939,6 +1011,47 @@ export default function ParkShare() {
     await updateSpot(selected.id, { released_from: null, released_until: null, booked_by: null, status });
     showToast(`Release cancelled`);
     resetPanel();
+  };
+
+  // ── My Spot release management (bypasses computed status, e.g. WFH days
+  // making the spot LOOK available today shouldn't block scheduling a
+  // future release) ──────────────────────────────────────────────────────
+  const mySpot = spots.find(s => s.id === currentUser.spot_id);
+
+  const resetMyPanel = () => {
+    setMyShowReleasePicker(false);
+    setMyStartDate(todayNZ()); setMyEndDate(todayNZ());
+  };
+
+  const handleMyStartChange = (v) => { setMyStartDate(v); if (myEndDate < v) setMyEndDate(v); };
+  const handleMyEndChange = (v) => { setMyEndDate(v); };
+
+  const handleMyRelease = async () => {
+    if (!mySpot) return;
+    const today = todayNZ();
+    const status = myStartDate <= today ? "available" : "reserved";
+    await updateSpot(mySpot.id, { booked_by: null, status, released_from: myStartDate, released_until: myEndDate });
+    showToast(`Spot ${mySpot.id} release set: ${fmt(myStartDate)} – ${fmt(myEndDate)}`);
+    resetMyPanel();
+  };
+
+  const handleMyReleaseToday = async () => {
+    if (!mySpot) return;
+    const today = todayNZ();
+    await updateSpot(mySpot.id, { booked_by: null, status: "available", released_from: today, released_until: today });
+    showToast(`Spot ${mySpot.id} released for today`);
+    resetMyPanel();
+  };
+
+  const handleMyCancelRelease = async () => {
+    if (!mySpot) return;
+    const dayNum = getTodayDayNum();
+    const isWfhToday = dayNum && mySpot.wfh_days &&
+      mySpot.wfh_days.split(",").map(d => d.trim()).includes(String(dayNum));
+    const status = isWfhToday ? "available" : "reserved";
+    await updateSpot(mySpot.id, { released_from: null, released_until: null, booked_by: null, status });
+    showToast(`Release cancelled`);
+    resetMyPanel();
   };
 
   const handleReleaseBooking = async () => {
@@ -1033,6 +1146,9 @@ export default function ParkShare() {
               <span style={{ color: "#9FE1CB", fontSize: 12, alignSelf: "center" }}>👤 {fullName(currentUser)}</span>
               <button onClick={() => setShowRules(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#5DCAA5", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Rules</button>
               <button onClick={() => setShowDirectory(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#cccccc", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Directory</button>
+              {currentUser.spot_id && (
+                <button onClick={() => setShowMySpot(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#cccccc", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>My Spot</button>
+              )}
               <button onClick={() => setShowChangePassword(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#cccccc", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Change Password</button>
               {isAdmin && <>
                 <button onClick={() => setShowAllocation(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#cccccc", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Allocation</button>
@@ -1158,6 +1274,18 @@ export default function ParkShare() {
 
         {/* Directory */}
         {showDirectory && <DirectoryModal onClose={() => setShowDirectory(false)} showToast={showToast} isAdmin={isAdmin} />}
+
+        {/* My Spot (release manager, bypasses computed status) */}
+        {showMySpot && (
+          <MySpotModal
+            mySpot={mySpot}
+            onClose={() => { setShowMySpot(false); resetMyPanel(); }}
+            showReleasePicker={myShowReleasePicker} setShowReleasePicker={setMyShowReleasePicker}
+            startDate={myStartDate} endDate={myEndDate}
+            onStartChange={handleMyStartChange} onEndChange={handleMyEndChange}
+            onRelease={handleMyRelease} onReleaseToday={handleMyReleaseToday} onCancelRelease={handleMyCancelRelease}
+          />
+        )}
 
         {/* Change Password */}
         {showChangePassword && (
