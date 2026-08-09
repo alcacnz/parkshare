@@ -5,7 +5,8 @@ const SUPABASE_URL = "https://buslyaosiesozpfwbadu.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1c2x5YW9zaWVzb3pwZndiYWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MDAwMTEsImV4cCI6MjA5NTQ3NjAxMX0.fYK_Lwq_40Ha5PNBwXtdgJQLTVtpEjuWQl3zLnIAIZs";
 const HEADERS = { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` };
 const DRIVEWAY_W = 36;
-const DISABLED_SPOTS = ["21"];
+const DISABLED_SPOTS = ["21", "29"];
+const DISABLED_LABELS = { "21": "No Park", "29": "Rio/Warrick" };
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
 // ─── SUPABASE API ─────────────────────────────────────────────────────────────
@@ -164,14 +165,14 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ first_name: "", username: "", password: "", role: "staff", spot_id: "" });
+  const [form, setForm] = useState({ first_name: "", username: "", password: "", role: "staff", spot_id: "", plate_number: "", mobile_number: "" });
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
 
   const load = () => fetchUsers().then(data => { setUsers(data); setLoading(false); });
   useEffect(() => { load(); }, []);
 
-  const resetForm = () => setForm({ first_name: "", username: "", password: "", role: "staff", spot_id: "" });
+  const resetForm = () => setForm({ first_name: "", username: "", password: "", role: "staff", spot_id: "", plate_number: "", mobile_number: "" });
 
   const handleAdd = async () => {
     if (!form.first_name || !form.username || !form.password) { showToast("First name, username and password required"); return; }
@@ -193,7 +194,7 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
     const newSpot = u._spot ?? u.spot_id;
     const oldSpot = u.spot_id;
     const newName = u._fn ?? u.first_name;
-    await updateUser(id, { first_name: u._fn ?? u.first_name, username: u._un ?? u.username, password: u._pw ?? u.password, role: u._role ?? u.role, spot_id: newSpot });
+    await updateUser(id, { first_name: u._fn ?? u.first_name, username: u._un ?? u.username, password: u._pw ?? u.password, role: u._role ?? u.role, spot_id: newSpot, plate_number: u._plate ?? u.plate_number ?? "", mobile_number: u._mobile ?? u.mobile_number ?? "" });
     // Sync spots
     if (oldSpot && oldSpot !== newSpot) await syncSpotOwner(oldSpot, "");
     if (newSpot) await syncSpotOwner(newSpot, newName);
@@ -253,6 +254,10 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
                 <option value="">No spot</option>
                 {availableSpots.map(s => <option key={s.id} value={s.id}>Spot {s.id}</option>)}
               </select>
+              <input value={form.plate_number} onChange={e => setForm(p => ({ ...p, plate_number: e.target.value }))} placeholder="Plate number"
+                style={{ flex: 1, minWidth: 120, border: "1px solid #ddd", borderRadius: 6, padding: "7px 10px", fontSize: 13 }} />
+              <input value={form.mobile_number} onChange={e => setForm(p => ({ ...p, mobile_number: e.target.value }))} placeholder="Mobile number"
+                style={{ flex: 1, minWidth: 120, border: "1px solid #ddd", borderRadius: 6, padding: "7px 10px", fontSize: 13 }} />
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
               <button onClick={handleAdd} disabled={saving} style={{ ...btn("#0F6E56", "white", { marginBottom: 0 }), flex: 1 }}>Save</button>
@@ -273,7 +278,7 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ background: "#f9fafb", borderBottom: "2px solid #e5e7eb" }}>
-                  {["Name", "Username", "Password", "Role", "Spot", ""].map(h => (
+                  {["Name", "Username", "Password", "Role", "Spot", "Plate", "Mobile", ""].map(h => (
                     <th key={h} style={{ padding: "8px 10px", textAlign: "left", fontSize: 12, color: "#666", fontWeight: 700 }}>{h}</th>
                   ))}
                 </tr>
@@ -316,6 +321,14 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
                           </select>
                         </td>
                         <td style={{ padding: "6px 4px" }}>
+                          <input value={u._plate ?? u.plate_number ?? ""} onChange={e => editField(u.id, "_plate", e.target.value)}
+                            style={{ width: 90, border: "1px solid #ddd", borderRadius: 4, padding: "4px 6px", fontSize: 12 }} />
+                        </td>
+                        <td style={{ padding: "6px 4px" }}>
+                          <input value={u._mobile ?? u.mobile_number ?? ""} onChange={e => editField(u.id, "_mobile", e.target.value)}
+                            style={{ width: 100, border: "1px solid #ddd", borderRadius: 4, padding: "4px 6px", fontSize: 12 }} />
+                        </td>
+                        <td style={{ padding: "6px 4px" }}>
                           <div style={{ display: "flex", gap: 4 }}>
                             <button onClick={() => handleUpdate(u.id)} disabled={saving} style={{ background: "#0F6E56", color: "white", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>Save</button>
                             <button onClick={() => setEditingId(null)} style={{ background: "#f3f4f6", color: "#555", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>Cancel</button>
@@ -331,6 +344,8 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
                           <span style={{ background: u.role === "admin" ? "#085041" : "#f3f4f6", color: u.role === "admin" ? "white" : "#555", borderRadius: 4, padding: "2px 8px", fontSize: 11, fontWeight: 600 }}>{u.role}</span>
                         </td>
                         <td style={{ padding: "8px 10px", color: "#666" }}>{u.spot_id ? `Spot ${u.spot_id}` : "—"}</td>
+                        <td style={{ padding: "8px 10px", color: "#666" }}>{u.plate_number || "—"}</td>
+                        <td style={{ padding: "8px 10px", color: "#666" }}>{u.mobile_number || "—"}</td>
                         <td style={{ padding: "8px 10px" }}>
                           <div style={{ display: "flex", gap: 4 }}>
                             <button onClick={() => setEditingId(u.id)} style={{ background: "#f3f4f6", color: "#555", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>Edit</button>
@@ -352,6 +367,157 @@ function UserManager({ onClose, showToast, spots, onSpotsUpdated }) {
   );
 }
 
+// ─── DIRECTORY ────────────────────────────────────────────────────────────────
+function DirectoryModal({ onClose, showToast, isAdmin }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const load = () => fetchUsers().then(data => { setUsers(data); setLoading(false); });
+  useEffect(() => { load(); }, []);
+
+  const editField = (id, field, value) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, [field]: value } : u));
+  };
+
+  const handleSave = async (id) => {
+    setSaving(true);
+    const u = users.find(u => u.id === id);
+    await updateUser(id, { plate_number: u._plate ?? u.plate_number ?? "", mobile_number: u._mobile ?? u.mobile_number ?? "" });
+    await load();
+    setSaving(false);
+    setEditingId(null);
+    showToast("Directory updated");
+  };
+
+  const filtered = users.filter(u => {
+    const q = search.toLowerCase();
+    return !q || u.first_name?.toLowerCase().includes(q) || u.plate_number?.toLowerCase().includes(q) || u.mobile_number?.toLowerCase().includes(q);
+  });
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 16 }}>
+      <div style={{ background: "white", borderRadius: 14, padding: 20, width: "100%", maxWidth: 560, maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <h3 style={{ margin: 0, color: "#085041", fontSize: 16 }}>Staff Directory</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#aaa" }}>✕</button>
+        </div>
+        <input
+          value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search by name, plate or mobile..."
+          style={{ width: "100%", border: "1px solid #ddd", borderRadius: 6, padding: "8px 10px", fontSize: 13, boxSizing: "border-box", marginBottom: 10 }}
+        />
+        {loading ? <p style={{ textAlign: "center", color: "#888" }}>Loading...</p> : (
+          <div style={{ overflowY: "auto", flex: 1 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: "#f9fafb", borderBottom: "2px solid #e5e7eb" }}>
+                  {["Name", "Plate Number", "Mobile Number", ...(isAdmin ? [""] : [])].map(h => (
+                    <th key={h} style={{ padding: "8px 10px", textAlign: "left", fontSize: 12, color: "#666", fontWeight: 700 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(u => (
+                  <tr key={u.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                    <td style={{ padding: "8px 10px" }}>{u.first_name}</td>
+                    {editingId === u.id ? (
+                      <>
+                        <td style={{ padding: "6px 4px" }}>
+                          <input value={u._plate ?? u.plate_number ?? ""} onChange={e => editField(u.id, "_plate", e.target.value)}
+                            style={{ width: 100, border: "1px solid #ddd", borderRadius: 4, padding: "4px 6px", fontSize: 12 }} />
+                        </td>
+                        <td style={{ padding: "6px 4px" }}>
+                          <input value={u._mobile ?? u.mobile_number ?? ""} onChange={e => editField(u.id, "_mobile", e.target.value)}
+                            style={{ width: 110, border: "1px solid #ddd", borderRadius: 4, padding: "4px 6px", fontSize: 12 }} />
+                        </td>
+                        <td style={{ padding: "6px 4px" }}>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            <button onClick={() => handleSave(u.id)} disabled={saving} style={{ background: "#0F6E56", color: "white", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>Save</button>
+                            <button onClick={() => setEditingId(null)} style={{ background: "#f3f4f6", color: "#555", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>Cancel</button>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td style={{ padding: "8px 10px", color: "#666" }}>{u.plate_number || "—"}</td>
+                        <td style={{ padding: "8px 10px", color: "#666" }}>{u.mobile_number || "—"}</td>
+                        {isAdmin && (
+                          <td style={{ padding: "8px 10px" }}>
+                            <button onClick={() => setEditingId(u.id)} style={{ background: "#f3f4f6", color: "#555", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer", fontSize: 12 }}>Edit</button>
+                          </td>
+                        )}
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── CHANGE PASSWORD ────────────────────────────────────────────────────────────
+function ChangePasswordModal({ currentUser, onClose, showToast, onPasswordChanged }) {
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setError("");
+    if (!currentPw || !newPw || !confirmPw) { setError("Please fill in all fields"); return; }
+    if (currentPw !== currentUser.password) { setError("Current password is incorrect"); return; }
+    if (newPw !== confirmPw) { setError("New passwords do not match"); return; }
+    if (newPw.length < 4) { setError("New password is too short"); return; }
+    setSaving(true);
+    await updateUser(currentUser.id, { password: newPw });
+    setSaving(false);
+    onPasswordChanged(newPw);
+    showToast("Password changed successfully");
+    onClose();
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 16 }}>
+      <div style={{ background: "white", borderRadius: 14, padding: 20, width: "100%", maxWidth: 360 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <h3 style={{ margin: 0, color: "#085041", fontSize: 16 }}>Change Password</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#aaa" }}>✕</button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div>
+            <label style={{ fontSize: 12, color: "#666", fontWeight: 600, display: "block", marginBottom: 4 }}>Current password</label>
+            <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)}
+              style={{ width: "100%", border: "1px solid #ddd", borderRadius: 8, padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, color: "#666", fontWeight: 600, display: "block", marginBottom: 4 }}>New password</label>
+            <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)}
+              style={{ width: "100%", border: "1px solid #ddd", borderRadius: 8, padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, color: "#666", fontWeight: 600, display: "block", marginBottom: 4 }}>Confirm new password</label>
+            <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSave()}
+              style={{ width: "100%", border: "1px solid #ddd", borderRadius: 8, padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }} />
+          </div>
+          {error && <p style={{ color: "#c00", fontSize: 13, margin: 0 }}>{error}</p>}
+          <button onClick={handleSave} disabled={saving} style={btn("#0F6E56", "white", { marginBottom: 0, opacity: saving ? 0.7 : 1 })}>
+            {saving ? "Saving..." : "Save new password"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── SPOT TILES ───────────────────────────────────────────────────────────────
 function SpotTile({ spot, selected, onSelect, isLast, currentUser }) {
   const disabled = DISABLED_SPOTS.includes(spot.id);
@@ -362,7 +528,7 @@ function SpotTile({ spot, selected, onSelect, isLast, currentUser }) {
       <div style={{ flex: 1, minWidth: 36, cursor: "not-allowed", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "4px 0", borderRight: isLast ? "none" : "1px solid #444444", opacity: 0.5 }}>
         <span style={{ fontSize: 9, color: "#cccccc" }}>{" "}</span>
         <div style={{ width: 36, height: 52, borderRadius: 3, background: "#6b7280", border: "1px dashed #9ca3af", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <span style={{ fontSize: 7, color: "#e5e7eb", fontWeight: 700 }}>No Park</span>
+          <span style={{ fontSize: 7, color: "#e5e7eb", fontWeight: 700, textAlign: "center", padding: "0 2px", lineHeight: 1.2, wordBreak: "break-word" }}>{DISABLED_LABELS[spot.id] || "No Park"}</span>
         </div>
         <span style={{ fontSize: 15, color: "#cccccc", fontWeight: 700 }}>{spot.id}</span>
       </div>
@@ -688,6 +854,8 @@ export default function ParkShare() {
   const [showRules, setShowRules] = useState(false);
   const [showAllocation, setShowAllocation] = useState(false);
   const [showUserManager, setShowUserManager] = useState(false);
+  const [showDirectory, setShowDirectory] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [toast, setToast] = useState(null);
   const [editName, setEditName] = useState("");
   const [showReleasePicker, setShowReleasePicker] = useState(false);
@@ -864,6 +1032,8 @@ export default function ParkShare() {
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
               <span style={{ color: "#9FE1CB", fontSize: 12, alignSelf: "center" }}>👤 {fullName(currentUser)}</span>
               <button onClick={() => setShowRules(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#5DCAA5", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Rules</button>
+              <button onClick={() => setShowDirectory(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#cccccc", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Directory</button>
+              <button onClick={() => setShowChangePassword(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#cccccc", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Change Password</button>
               {isAdmin && <>
                 <button onClick={() => setShowAllocation(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#cccccc", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Allocation</button>
                 <button onClick={() => setShowUserManager(true)} style={{ background: "transparent", border: "1px solid #5DCAA5", color: "#cccccc", borderRadius: 6, padding: "6px 10px", cursor: "pointer", fontSize: 12 }}>Users</button>
@@ -985,6 +1155,19 @@ export default function ParkShare() {
 
         {/* User Manager */}
         {showUserManager && <UserManager onClose={() => setShowUserManager(false)} showToast={showToast} spots={spots} onSpotsUpdated={() => fetchSpots().then(data => setSpots(data))} />}
+
+        {/* Directory */}
+        {showDirectory && <DirectoryModal onClose={() => setShowDirectory(false)} showToast={showToast} isAdmin={isAdmin} />}
+
+        {/* Change Password */}
+        {showChangePassword && (
+          <ChangePasswordModal
+            currentUser={currentUser}
+            onClose={() => setShowChangePassword(false)}
+            showToast={showToast}
+            onPasswordChanged={(newPw) => setCurrentUser(prev => ({ ...prev, password: newPw }))}
+          />
+        )}
 
         {/* Rules Modal */}
         {showRules && (
