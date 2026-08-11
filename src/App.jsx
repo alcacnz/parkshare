@@ -26,29 +26,27 @@ async function syncSpotOwner(spotId, ownerName) {
     body: JSON.stringify({ owner: ownerName || "", status: ownerName ? "reserved" : "available" }),
   });
 }
-async function fetchUsers() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/users?select=*&order=first_name`, { headers: HEADERS });
+const USERS_API = `${SUPABASE_URL}/functions/v1/smooth-processor`;
+async function callUsersApi(payload) {
+  const res = await fetch(USERS_API, { method: "POST", headers: HEADERS, body: JSON.stringify(payload) });
   return res.json();
 }
+async function fetchUsers() {
+  const { users } = await callUsersApi({ action: "list" });
+  return users || [];
+}
 async function loginUser(username, password) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}&select=*`, { headers: HEADERS });
-  const data = await res.json();
-  return data[0] || null;
+  const { user } = await callUsersApi({ action: "login", username, password });
+  return user || null;
 }
 async function createUser(user) {
-  await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-    method: "POST", headers: { ...HEADERS, "Prefer": "return=minimal" }, body: JSON.stringify(user),
-  });
+  await callUsersApi({ action: "create", ...user });
 }
 async function updateUser(id, changes) {
-  await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${id}`, {
-    method: "PATCH", headers: { ...HEADERS, "Prefer": "return=minimal" }, body: JSON.stringify(changes),
-  });
+  await callUsersApi({ action: "update", id, updates: changes });
 }
 async function deleteUser(id) {
-  await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${id}`, {
-    method: "DELETE", headers: { ...HEADERS, "Prefer": "return=minimal" },
-  });
+  await callUsersApi({ action: "delete", id });
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
