@@ -471,10 +471,15 @@ function ChangePasswordModal({ currentUser, onClose, showToast, onPasswordChange
   const handleSave = async () => {
     setError("");
     if (!currentPw || !newPw || !confirmPw) { setError("Please fill in all fields"); return; }
-    if (currentPw !== currentUser.password) { setError("Current password is incorrect"); return; }
     if (newPw !== confirmPw) { setError("New passwords do not match"); return; }
     if (newPw.length < 4) { setError("New password is too short"); return; }
     setSaving(true);
+    const verified = await loginUser(currentUser.username, currentPw);
+    if (!verified) {
+      setSaving(false);
+      setError("Current password is incorrect");
+      return;
+    }
     await updateUser(currentUser.id, { password: newPw });
     setSaving(false);
     onPasswordChanged(newPw);
